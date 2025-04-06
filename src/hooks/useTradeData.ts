@@ -13,12 +13,19 @@ export function useTradeData() {
 
   const fetchTrades = async () => {
     try {
+      const session = await supabase.auth.getSession();
+      const user_id = session.data.session?.user?.id;
+
+      if (!user_id) throw new Error('No authenticated user');
+
       const { data, error } = await supabase
         .from('trades')
         .select('*')
+        .eq('user_id', user_id)  // Filter by user_id
         .order('date', { ascending: false });
 
       if (error) throw error;
+      console.log('Fetched trades:', data); // Debugging
       setTrades(data || []);
       setLoading(false);
     } catch (err) {
@@ -55,7 +62,7 @@ export function useTradeData() {
         .single();
 
       if (error) throw error;
-      setTrades(prev => [data, ...prev]);
+      await fetchTrades(); // Refresh trades after adding
       return data;
     } catch (err) {
       console.error('Error adding trade:', err);
@@ -167,6 +174,11 @@ export function useTradeData() {
     }
   };
 
+  const refetchTrades = () => {
+    setLoading(true);
+    fetchTrades();
+  };
+
   return { 
     trades, 
     loading, 
@@ -175,6 +187,7 @@ export function useTradeData() {
     updateTrade, 
     softDeleteTrade, 
     permanentDeleteTrade,
-    restoreTrade 
+    restoreTrade,
+    refetchTrades 
   };
 }

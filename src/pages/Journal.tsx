@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ChevronDown, Upload } from 'lucide-react';
 import TradeTable from '../components/TradeTable';
 import StatsBar from '../components/StatsBar';
@@ -23,8 +23,14 @@ function Journal({ isNewTrade = false }: JournalProps) {
     updateTrade, 
     softDeleteTrade, 
     permanentDeleteTrade,
-    restoreTrade 
+    restoreTrade,
+    refetchTrades
   } = useTradeData();
+
+  useEffect(() => {
+    refetchTrades();
+  }, []);
+
   const { 
     tradePlans, 
     loading: plansLoading, 
