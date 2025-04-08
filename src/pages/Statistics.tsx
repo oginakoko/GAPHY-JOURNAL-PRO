@@ -9,35 +9,57 @@ function Statistics() {
   const activeTrades = trades.filter(t => !t.deleted);
 
   const stats = useMemo(() => {
-    const totalTrades = activeTrades.length;
-    const winningTrades = activeTrades.filter(t => t.pl > 0).length;
-    const losingTrades = activeTrades.filter(t => t.pl < 0).length;
-    const totalPL = activeTrades.reduce((sum, t) => sum + t.pl, 0);
-    const averagePL = totalTrades ? totalPL / totalTrades : 0;
+    // Only include actual trades, not withdrawals or deposits
+    const tradingTrades = activeTrades.filter(t => t.type === 'trade');
+    const totalTrades = tradingTrades.length;
+    const winningTrades = tradingTrades.filter(t => t.pl > 0).length;
+    const losingTrades = tradingTrades.filter(t => t.pl < 0).length;
+    
+    // Calculate total P/L from trading only
+    const tradingPL = tradingTrades.reduce((sum, t) => sum + t.pl, 0);
+    const averagePL = totalTrades ? tradingPL / totalTrades : 0;
     const winRate = totalTrades ? (winningTrades / totalTrades) * 100 : 0;
     
-    const byInstrument = activeTrades.reduce((acc, trade) => {
+    // Group trading P/L by instrument
+    const byInstrument = tradingTrades.reduce((acc, trade) => {
       acc[trade.instrument] = (acc[trade.instrument] || 0) + trade.pl;
       return acc;
     }, {} as Record<string, number>);
 
-    const monthlyPL = activeTrades.reduce((acc, trade) => {
+    // Calculate monthly P/L from trading only
+    const monthlyPL = tradingTrades.reduce((acc, trade) => {
       const month = new Date(trade.date).toLocaleString('default', { month: 'short' });
       acc[month] = (acc[month] || 0) + trade.pl;
       return acc;
     }, {} as Record<string, number>);
 
-    const totalEquity = totalBalance + activeTrades.reduce((sum, t) => sum + t.pl, 0);
+    // Calculate withdrawals
+    const totalWithdrawals = activeTrades
+      .filter(t => t.type === 'withdrawal')
+      .reduce((sum, t) => sum + t.price, 0);
+
+    // Calculate deposits
+    const totalDeposits = activeTrades
+      .filter(t => t.type === 'deposit')
+      .reduce((sum, t) => sum + t.price, 0);
+
+    const totalEquity = totalBalance + tradingPL - totalWithdrawals + totalDeposits;
     const returnOnInvestment = totalBalance ? (totalEquity - totalBalance) / totalBalance * 100 : 0;
 
-    // Calculate equity curve data
+    // Calculate equity curve data including all transaction types
     const equityCurveData = activeTrades
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
       .reduce((acc: any[], trade) => {
         const previousEquity = acc.length > 0 ? acc[acc.length - 1].equity : totalBalance;
+        const equityChange = trade.type === 'withdrawal' 
+          ? -trade.price 
+          : trade.type === 'deposit' 
+            ? trade.price 
+            : trade.pl;
+            
         return [...acc, {
           date: trade.date,
-          equity: previousEquity + trade.pl
+          equity: previousEquity + equityChange
         }];
       }, [{ date: activeTrades[0]?.date || new Date().toISOString(), equity: totalBalance }]);
 
@@ -45,13 +67,15 @@ function Statistics() {
       totalTrades,
       winningTrades,
       losingTrades,
-      totalPL,
+      tradingPL,
       averagePL,
       winRate,
       byInstrument,
       monthlyPL,
       totalEquity,
       returnOnInvestment,
+      totalWithdrawals,
+      totalDeposits,
       initialBalance: totalBalance,
       equityCurveData
     };
@@ -77,14 +101,18 @@ function Statistics() {
             <p>ROI: <span className={stats.returnOnInvestment >= 0 ? 'text-green-400' : 'text-red-400'}>
               {stats.returnOnInvestment.toFixed(2)}%
             </span></p>
+            <div className="mt-4 pt-4 border-t border-gray-700">
+              <p>Total Withdrawals: <span className="text-red-400">-${stats.totalWithdrawals.toFixed(2)}</span></p>
+              <p>Total Deposits: <span className="text-green-400">+${stats.totalDeposits.toFixed(2)}</span></p>
+            </div>
           </div>
         </div>
 
         <div className="bg-[#1A1A1A] p-6 rounded-lg">
           <h3 className="text-lg font-medium mb-2">Overall Performance</h3>
           <div className="space-y-2">
-            <p>Total P/L: <span className={stats.totalPL >= 0 ? 'text-green-400' : 'text-red-400'}>
-              ${stats.totalPL.toFixed(2)}
+            <p>Total P/L: <span className={stats.tradingPL >= 0 ? 'text-green-400' : 'text-red-400'}>
+              ${stats.tradingPL.toFixed(2)}
             </span></p>
             <p>Win Rate: {stats.winRate.toFixed(2)}%</p>
             <p>Total Trades: {stats.totalTrades}</p>

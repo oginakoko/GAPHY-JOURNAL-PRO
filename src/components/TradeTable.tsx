@@ -15,6 +15,97 @@ interface TradeTableProps {
 function TradeTable({ trades, onEdit, onDelete, onPermanentDelete, onRestore, showDeleted }: TradeTableProps) {
   const [editingTrade, setEditingTrade] = useState<Trade | null>(null);
 
+  const renderTradeRow = (trade: Trade) => {
+    const isWithdrawal = trade.type === 'withdrawal';
+    const isDeposit = trade.type === 'deposit';
+
+    return (
+      <tr key={trade.id} className={`border-t border-gray-800 ${trade.deleted ? 'opacity-50' : ''} ${isWithdrawal ? 'bg-red-900/20' : isDeposit ? 'bg-green-900/20' : ''}`}>
+        <td className="p-4 font-medium">
+          {isWithdrawal ? 'Withdrawal' : isDeposit ? 'Deposit' : trade.symbol}
+          {(isWithdrawal || isDeposit) && trade.description && (
+            <div className="text-sm text-gray-400">{trade.description}</div>
+          )}
+        </td>
+        <td className="p-4 text-gray-300">{trade.date}</td>
+        <td className="p-4">
+          {!isWithdrawal && !isDeposit && (
+            <span className={trade.side === 'Buy' ? 'text-green-400' : 'text-red-400'}>
+              {trade.side}
+            </span>
+          )}
+        </td>
+        <td className="p-4">{isWithdrawal || isDeposit ? '-' : trade.instrument}</td>
+        <td className="p-4">{isWithdrawal || isDeposit ? '-' : trade.qty}</td>
+        <td className="p-4">
+          {isWithdrawal || isDeposit ? (
+            <span className={isWithdrawal ? 'text-red-400' : 'text-green-400'}>
+              ${trade.price.toLocaleString()}
+            </span>
+          ) : (
+            `$${trade.price.toLocaleString()}`
+          )}
+        </td>
+        <td className={`p-4 ${trade.pl >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+          {trade.pl >= 0 ? '+' : ''}{trade.pl}
+        </td>
+        <td className="p-4">
+          {!isWithdrawal && !isDeposit && trade.screenshot && (
+            <img 
+              src={trade.screenshot} 
+              alt="Trade Screenshot" 
+              className="w-10 h-10 object-cover rounded cursor-pointer"
+              onClick={() => window.open(trade.screenshot, '_blank')}
+            />
+          )}
+        </td>
+        <td className="p-4">
+          <div className="flex items-center gap-2">
+            {trade.deleted ? (
+              <>
+                <button
+                  onClick={() => onRestore(trade.id)}
+                  className="p-2 hover:bg-[#252525] rounded"
+                  title="Restore"
+                >
+                  <Undo className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => {
+                    if (confirm('Are you sure you want to permanently delete this? This action cannot be undone.')) {
+                      onPermanentDelete(trade.id);
+                    }
+                  }}
+                  className="p-2 hover:bg-red-500 rounded"
+                  title="Delete Forever"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  onClick={() => setEditingTrade(trade)}
+                  className="p-2 hover:bg-[#252525] rounded"
+                  title="Edit"
+                >
+                  <Edit2 className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => onDelete(trade.id)}
+                  className="p-2 hover:bg-[#252525] rounded"
+                  title="Move to Trash"
+                >
+                  <Trash className="w-4 h-4" />
+                </button>
+              </>
+            )}
+          </div>
+        </td>
+      </tr>
+    );
+  };
+
   return (
     <>
       <div className="bg-[#1A1A1A] rounded-lg overflow-hidden w-full min-w-[800px]">
@@ -33,76 +124,7 @@ function TradeTable({ trades, onEdit, onDelete, onPermanentDelete, onRestore, sh
             </tr>
           </thead>
           <tbody>
-            {trades.map((trade) => (
-              <tr key={trade.id} className={`border-t border-gray-800 ${trade.deleted ? 'opacity-50' : ''}`}>
-                <td className="p-4 font-medium">{trade.symbol}</td>
-                <td className="p-4 text-gray-300">{trade.date}</td>
-                <td className="p-4">
-                  <span className={trade.side === 'Buy' ? 'text-green-400' : 'text-red-400'}>
-                    {trade.side}
-                  </span>
-                </td>
-                <td className="p-4">{trade.instrument}</td>
-                <td className="p-4">{trade.qty}</td>
-                <td className="p-4">${trade.price.toLocaleString()}</td>
-                <td className={`p-4 ${trade.pl >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                  {trade.pl >= 0 ? '+' : ''}{trade.pl}
-                </td>
-                <td className="p-4">
-                  {trade.screenshot && (
-                    <img 
-                      src={trade.screenshot} 
-                      alt="Trade Screenshot" 
-                      className="w-10 h-10 object-cover rounded cursor-pointer"
-                      onClick={() => window.open(trade.screenshot, '_blank')}
-                    />
-                  )}
-                </td>
-                <td className="p-4">
-                  <div className="flex items-center gap-2">
-                    {trade.deleted ? (
-                      <>
-                        <button
-                          onClick={() => onRestore(trade.id)}
-                          className="p-2 hover:bg-[#252525] rounded"
-                          title="Restore"
-                        >
-                          <Undo className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => {
-                            if (confirm('Are you sure you want to permanently delete this trade? This action cannot be undone.')) {
-                              onPermanentDelete(trade.id);
-                            }
-                          }}
-                          className="p-2 hover:bg-red-500 rounded"
-                          title="Delete Forever"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                        <button
-                          onClick={() => setEditingTrade(trade)}
-                          className="p-2 hover:bg-[#252525] rounded"
-                          title="Edit"
-                        >
-                          <Edit2 className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => onDelete(trade.id)}
-                          className="p-2 hover:bg-[#252525] rounded"
-                          title="Move to Trash"
-                        >
-                          <Trash className="w-4 h-4" />
-                        </button>
-                      </>
-                    )}
-                  </div>
-                </td>
-              </tr>
-            ))}
+            {trades.map(renderTradeRow)}
           </tbody>
         </table>
       </div>

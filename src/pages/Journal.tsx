@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { ChevronDown, Upload } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import TradeTable from '../components/TradeTable';
 import StatsBar from '../components/StatsBar';
 import TradePlannerModal from '../components/TradePlannerModal';
 import { Trade, InstrumentType } from '../types';
 import TradeForm from '../components/TradeForm';
+import WithdrawalForm from '../components/WithdrawalForm';
 import useLocalStorage from '../hooks/useLocalStorage';
 import TradingViewTicker from '../components/TradingViewTicker';
 import { useTradeData } from '../hooks/useTradeData';
@@ -20,6 +20,8 @@ function Journal({ isNewTrade = false }: JournalProps) {
     loading, 
     error, 
     addTrade, 
+    addWithdrawal,
+    calculateTotalEquity,
     updateTrade, 
     softDeleteTrade, 
     permanentDeleteTrade,
@@ -39,6 +41,7 @@ function Journal({ isNewTrade = false }: JournalProps) {
   } = useTradePlans();
   const [showPlanner, setShowPlanner] = useState(false);
   const [isTradeFormOpen, setIsTradeFormOpen] = useState(isNewTrade);
+  const [isWithdrawalFormOpen, setIsWithdrawalFormOpen] = useState(false);
   const [selectedInstrument, setSelectedInstrument] = useLocalStorage<InstrumentType>('selectedInstrument', 'Stocks');
   const [showDeleted, setShowDeleted] = useLocalStorage<boolean>('showDeleted', false);
   const [selectedPlan, setSelectedPlan] = useLocalStorage<string>('selectedPlan', '');
@@ -48,6 +51,14 @@ function Journal({ isNewTrade = false }: JournalProps) {
     (showDeleted ? trade.deleted : !trade.deleted) && 
     (selectedInstrument === 'all' || trade.instrument === selectedInstrument)
   );
+
+  const activeTrades = trades.filter(t => !t.deleted);
+  const totalWithdrawals = activeTrades
+    .filter(t => t.type === 'withdrawal')
+    .reduce((sum, t) => sum + t.price, 0);
+  
+  const tradingTrades = activeTrades.filter(t => t.type === 'trade');
+  const currentEquity = calculateTotalEquity();
 
   const handleAddTrade = (trade: Trade) => {
     const newTrade = {
@@ -90,6 +101,11 @@ function Journal({ isNewTrade = false }: JournalProps) {
     }
   };
 
+  const handleWithdrawal = async (amount: number, description: string) => {
+    await addWithdrawal(amount, description);
+    setIsWithdrawalFormOpen(false);
+  };
+
   const completionPercentage = activePlan
     ? Math.round(
         (activePlan.checklist.filter(item => item.completed).length / activePlan.checklist.length) * 100
@@ -112,18 +128,27 @@ function Journal({ isNewTrade = false }: JournalProps) {
       
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl md:text-4xl font-bold">Trading Journal</h1>
-        <button
-          onClick={() => setIsTradeFormOpen(true)}
-          className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg flex items-center gap-2"
-        >
-          + Add New Trade
-        </button>
+        <div className="flex gap-4">
+          <button
+            onClick={() => setIsWithdrawalFormOpen(true)}
+            className="bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-lg flex items-center gap-2"
+          >
+            Withdraw
+          </button>
+          <button
+            onClick={() => setIsTradeFormOpen(true)}
+            className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg flex items-center gap-2"
+          >
+            + Add New Trade
+          </button>
+        </div>
       </div>
 
       <StatsBar 
-        totalPL={filteredTrades.reduce((sum, trade) => sum + trade.pl, 0)}
-        winRate={Math.round((filteredTrades.filter(t => t.pl > 0).length / filteredTrades.length) * 100)}
-        trades={filteredTrades.length}
+        winRate={Math.round((tradingTrades.filter(t => t.pl > 0).length / tradingTrades.length) * 100)}
+        trades={tradingTrades.length}
+        withdrawals={totalWithdrawals}
+        equity={currentEquity}
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6 mb-8">
@@ -311,6 +336,13 @@ function Journal({ isNewTrade = false }: JournalProps) {
           onSubmit={handleAddTrade}
           onClose={() => setIsTradeFormOpen(false)}
           selectedInstrument={selectedInstrument}
+        />
+      )}
+
+      {isWithdrawalFormOpen && (
+        <WithdrawalForm
+          onSubmit={handleWithdrawal}
+          onClose={() => setIsWithdrawalFormOpen(false)}
         />
       )}
 

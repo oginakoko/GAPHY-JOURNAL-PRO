@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Trade } from '../types';
+import { Trade, TradeType } from '../types';
 import { supabase } from '../lib/supabase';
 
 export function useTradeData() {
@@ -21,11 +21,11 @@ export function useTradeData() {
       const { data, error } = await supabase
         .from('trades')
         .select('*')
-        .eq('user_id', user_id)  // Filter by user_id
+        .eq('user_id', user_id)
         .order('date', { ascending: false });
 
       if (error) throw error;
-      console.log('Fetched trades:', data); // Debugging
+      console.log('Fetched trades:', data);
       setTrades(data || []);
       setLoading(false);
     } catch (err) {
@@ -42,11 +42,11 @@ export function useTradeData() {
 
       if (!user_id) throw new Error('No authenticated user');
 
-      // Remove id from trade object and let Supabase generate it
       const { id, ...tradeData } = trade as any;
 
       const newTrade = {
         ...tradeData,
+        type: 'trade' as TradeType,
         user_id,
         qty: Number(trade.qty),
         price: Number(trade.price),
@@ -62,11 +62,72 @@ export function useTradeData() {
         .single();
 
       if (error) throw error;
-      await fetchTrades(); // Refresh trades after adding
+      await fetchTrades();
       return data;
     } catch (err) {
       console.error('Error adding trade:', err);
       setError('Failed to add trade');
+      return null;
+    }
+  };
+
+  const addWithdrawal = async (amount: number, description: string = '') => {
+    try {
+      const session = await supabase.auth.getSession();
+      const user_id = session.data.session?.user?.id;
+
+      if (!user_id) throw new Error('No authenticated user');
+      if (amount <= 0) throw new Error('Withdrawal amount must be greater than 0');
+
+      // First try to verify the schema
+      const { error: schemaError } = await supabase
+        .from('trades')
+        .select('type, description')
+        .limit(1);
+
+      if (schemaError) {
+        console.error('Schema verification failed:', schemaError);
+        throw new Error('Database schema is not properly configured. Please contact support.');
+      }
+
+      const withdrawal = {
+        user_id,
+        type: 'withdrawal' as TradeType,
+        symbol: 'WITHDRAWAL',
+        date: new Date().toISOString().split('T')[0],
+        side: 'Sell',
+        qty: 1,
+        price: Math.abs(amount),
+        pl: -Math.abs(amount),
+        instrument: 'all',
+        description: description.trim(),
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+
+      // Try inserting with explicit column list
+      const { data, error } = await supabase
+        .from('trades')
+        .insert([withdrawal])
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Insert error:', error);
+        // If the error is related to schema cache, try to clear it
+        if (error.message.includes('schema cache')) {
+          await supabase.rest.removeCacheBySchema('public');
+          throw new Error('Please try again - schema cache has been reset');
+        }
+        throw error;
+      }
+
+      await fetchTrades();
+      return data;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to add withdrawal';
+      console.error('Error adding withdrawal:', err);
+      setError(errorMessage);
       return null;
     }
   };
@@ -88,10 +149,10 @@ export function useTradeData() {
           deleted_at: trade.deleted_at,
           updated_at: new Date().toISOString()
         })
-        .match({ id: trade.id });  // Use match instead of eq
+        .match({ id: trade.id });
 
       if (error) throw error;
-      
+
       setTrades(prev => prev.map(t => t.id === trade.id ? { ...t, ...trade } : t));
       return true;
     } catch (err) {
@@ -103,18 +164,16 @@ export function useTradeData() {
 
   const softDeleteTrade = async (id: string) => {
     try {
-      // Update local state first
-      setTrades(prev => prev.map(t => 
-        t.id === id 
-          ? { ...t, deleted: true, deleted_at: new Date().toISOString() } 
+      setTrades(prev => prev.map(t =>
+        t.id === id
+          ? { ...t, deleted: true, deleted_at: new Date().toISOString() }
           : t
       ));
 
-      // Then update in Supabase
       const { error } = await supabase
         .from('trades')
-        .update({ 
-          deleted: true, 
+        .update({
+          deleted: true,
           deleted_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         })
@@ -148,18 +207,16 @@ export function useTradeData() {
 
   const restoreTrade = async (id: string) => {
     try {
-      // Update local state first
-      setTrades(prev => prev.map(t => 
-        t.id === id 
-          ? { ...t, deleted: false, deleted_at: null } 
+      setTrades(prev => prev.map(t =>
+        t.id === id
+          ? { ...t, deleted: false, deleted_at: undefined }
           : t
       ));
 
-      // Then update in Supabase
       const { error } = await supabase
         .from('trades')
-        .update({ 
-          deleted: false, 
+        .update({
+          deleted: false,
           deleted_at: null,
           updated_at: new Date().toISOString()
         })
@@ -179,15 +236,29 @@ export function useTradeData() {
     fetchTrades();
   };
 
-  return { 
-    trades, 
-    loading, 
-    error, 
-    addTrade, 
-    updateTrade, 
-    softDeleteTrade, 
+  const calculateTotalEquity = () => {
+    return trades.reduce((sum, item) => {
+      if (item.type === 'withdrawal') {
+        return sum - item.price;
+      } else if (item.type === 'deposit') {
+        return sum + item.price;
+      } else {
+        return sum + item.pl;
+      }
+    }, 0);
+  };
+
+  return {
+    trades,
+    loading,
+    error,
+    addTrade,
+    addWithdrawal,
+    calculateTotalEquity,
+    updateTrade,
+    softDeleteTrade,
     permanentDeleteTrade,
     restoreTrade,
-    refetchTrades 
+    refetchTrades
   };
 }
