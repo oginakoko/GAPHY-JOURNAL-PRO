@@ -79,17 +79,6 @@ export function useTradeData() {
       if (!user_id) throw new Error('No authenticated user');
       if (amount <= 0) throw new Error('Withdrawal amount must be greater than 0');
 
-      // First try to verify the schema
-      const { error: schemaError } = await supabase
-        .from('trades')
-        .select('type, description')
-        .limit(1);
-
-      if (schemaError) {
-        console.error('Schema verification failed:', schemaError);
-        throw new Error('Database schema is not properly configured. Please contact support.');
-      }
-
       const withdrawal = {
         user_id,
         type: 'withdrawal' as TradeType,
@@ -105,7 +94,7 @@ export function useTradeData() {
         updated_at: new Date().toISOString()
       };
 
-      // Try inserting with explicit column list
+      // Insert the withdrawal
       const { data, error } = await supabase
         .from('trades')
         .insert([withdrawal])
@@ -114,11 +103,6 @@ export function useTradeData() {
 
       if (error) {
         console.error('Insert error:', error);
-        // If the error is related to schema cache, try to clear it
-        if (error.message.includes('schema cache')) {
-          await supabase.rest.removeCacheBySchema('public');
-          throw new Error('Please try again - schema cache has been reset');
-        }
         throw error;
       }
 
@@ -127,6 +111,50 @@ export function useTradeData() {
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to add withdrawal';
       console.error('Error adding withdrawal:', err);
+      setError(errorMessage);
+      return null;
+    }
+  };
+
+  const addDeposit = async (amount: number, description: string = '') => {
+    try {
+      const session = await supabase.auth.getSession();
+      const user_id = session.data.session?.user?.id;
+
+      if (!user_id) throw new Error('No authenticated user');
+      if (amount <= 0) throw new Error('Deposit amount must be greater than 0');
+
+      const deposit = {
+        user_id,
+        type: 'deposit' as TradeType,
+        symbol: 'DEPOSIT',
+        date: new Date().toISOString().split('T')[0],
+        side: 'Buy',
+        qty: 1,
+        price: Math.abs(amount),
+        pl: Math.abs(amount),
+        instrument: 'all',
+        description: description.trim(),
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+
+      const { data, error } = await supabase
+        .from('trades')
+        .insert([deposit])
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Insert error:', error);
+        throw error;
+      }
+
+      await fetchTrades();
+      return data;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to add deposit';
+      console.error('Error adding deposit:', err);
       setError(errorMessage);
       return null;
     }
@@ -237,15 +265,26 @@ export function useTradeData() {
   };
 
   const calculateTotalEquity = () => {
-    return trades.reduce((sum, item) => {
-      if (item.type === 'withdrawal') {
-        return sum - item.price;
-      } else if (item.type === 'deposit') {
-        return sum + item.price;
-      } else {
-        return sum + item.pl;
-      }
-    }, 0);
+    // Filter out deleted trades
+    const activeTrades = trades.filter(t => !t.deleted);
+    
+    // Calculate initial balance from deposits
+    const deposits = activeTrades
+      .filter(t => t.type === 'deposit')
+      .reduce((sum, t) => sum + t.price, 0);
+    
+    // Calculate withdrawals
+    const withdrawals = activeTrades
+      .filter(t => t.type === 'withdrawal')
+      .reduce((sum, t) => sum + t.price, 0);
+    
+    // Calculate P/L from trades
+    const tradingPL = activeTrades
+      .filter(t => t.type === 'trade')
+      .reduce((sum, t) => sum + t.pl, 0);
+    
+    // Total equity = deposits - withdrawals + trading P/L
+    return deposits - withdrawals + tradingPL;
   };
 
   return {
@@ -254,6 +293,7 @@ export function useTradeData() {
     error,
     addTrade,
     addWithdrawal,
+    addDeposit,
     calculateTotalEquity,
     updateTrade,
     softDeleteTrade,

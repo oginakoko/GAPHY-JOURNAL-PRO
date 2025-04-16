@@ -10,7 +10,7 @@ import Auth from './components/Auth';
 import { supabase } from './lib/supabase';
 import { Session } from '@supabase/supabase-js';
 
-function Header() {
+function Header({ onLogout }: { onLogout: () => void }) {
   const navigate = useNavigate();
 
   return (
@@ -33,6 +33,12 @@ function Header() {
         </button>
         <button onClick={() => navigate('/journal/new')} className="bg-white text-black p-2 rounded-lg ml-auto sm:ml-0">
           <Plus className="w-5 h-5" />
+        </button>
+        <button
+          onClick={onLogout}
+          className="bg-red-500 text-white p-2 rounded-lg ml-auto sm:ml-0"
+        >
+          Logout
         </button>
       </nav>
     </div>
@@ -73,7 +79,7 @@ function AppContent() {
 
   useEffect(() => {
     if (appState.lastVisitedPage !== location.pathname) {
-      setAppState((prev) => {
+      setAppState((prev: AppState) => {
         if (prev.lastVisitedPage === location.pathname) {
           return prev;
         }
@@ -91,6 +97,12 @@ function AppContent() {
     }
   }, [location.pathname, appState.lastVisitedPage, navigate]);
 
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setSession(null);
+    navigate('/');
+  };
+
   if (loading) {
     return <div>Loading...</div>;
   }
@@ -102,7 +114,7 @@ function AppContent() {
   return (
     <div className="min-h-screen bg-[#141414] text-white p-4 md:p-6 overflow-x-hidden">
       <div className="max-w-7xl mx-auto">
-        <Header />
+        <Header onLogout={handleLogout} />
         <Routes>
           <Route path="/" element={<Journal />} />
           <Route path="/statistics" element={<Statistics />} />

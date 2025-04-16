@@ -68,7 +68,8 @@ function Settings() {
         return;
       }
 
-      const { data, error } = await supabase
+      // First create the account
+      const { data: accountData, error: accountError } = await supabase
         .from('trading_accounts')
         .insert([{
           user_id,
@@ -81,9 +82,29 @@ function Settings() {
         .select()
         .single();
 
-      if (error) throw error;
+      if (accountError) throw accountError;
 
-      setAccounts(prev => [...prev, data]);
+      // Then create a deposit trade for the initial balance
+      const { error: depositError } = await supabase
+        .from('trades')
+        .insert([{
+          user_id,
+          type: 'deposit',
+          symbol: 'INITIAL_DEPOSIT',
+          date: new Date().toISOString().split('T')[0],
+          side: 'Buy',
+          qty: 1,
+          price: Number(newAccount.initial_balance),
+          pl: 0,
+          instrument: 'all',
+          description: `Initial deposit for account: ${newAccount.name}`,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }]);
+
+      if (depositError) throw depositError;
+
+      setAccounts(prev => [...prev, accountData]);
       setNewAccount({ name: '', initial_balance: '', currency: 'USD' });
       setError(null);
     } catch (err: any) {
@@ -94,14 +115,38 @@ function Settings() {
 
   const deleteAccount = async (id: string) => {
     try {
-      const { error } = await supabase
+      // Find the account to get its initial balance
+      const account = accounts.find(acc => acc.id === id);
+      if (!account) throw new Error('Account not found');
+
+      const keepMetrics = window.confirm(
+        'Do you want to keep the metrics for this account? \n\n' +
+        'Yes - Keep the initial balance in your total equity and statistics\n' +
+        'No - Remove all related metrics from your statistics'
+      );
+
+      if (!keepMetrics) {
+        // Delete the initial deposit trade
+        const { error: tradeError } = await supabase
+          .from('trades')
+          .delete()
+          .eq('symbol', 'INITIAL_DEPOSIT')
+          .eq('description', `Initial deposit for account: ${account.name}`);
+
+        if (tradeError) throw tradeError;
+      }
+
+      // Delete the account
+      const { error: accountError } = await supabase
         .from('trading_accounts')
         .delete()
         .eq('id', id);
 
-      if (error) throw error;
+      if (accountError) throw accountError;
+
       setAccounts(accounts.filter(acc => acc.id !== id));
     } catch (err) {
+      console.error('Error deleting account:', err);
       setError('Failed to delete account');
     }
   };
@@ -112,98 +157,108 @@ function Settings() {
     <div className="max-w-2xl mx-auto">
       <h1 className="text-3xl font-bold mb-8">Settings</h1>
       
-      <div className="bg-[#1A1A1A] rounded-lg p-6 mb-6">
-        <h2 className="text-xl font-semibold mb-4">Authentication Settings</h2>
-        <form onSubmit={handleAuthUpdate} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium mb-1">Authentication Type</label>
-            <select
-              value={authType}
-              onChange={(e) => setAuthType(e.target.value as 'pin' | 'password')}
-              className="w-full bg-[#252525] rounded px-4 py-2"
-            >
-              <option value="pin">PIN</option>
-              <option value="password">Password</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">
-              New {authType === 'pin' ? 'PIN' : 'Password'}
-            </label>
-            <input
-              type={authType === 'pin' ? 'number' : 'password'}
-              value={newValue}
-              onChange={(e) => setNewValue(e.target.value)}
-              className="w-full bg-[#252525] rounded px-4 py-2"
-              maxLength={authType === 'pin' ? 4 : undefined}
-            />
-          </div>
-          {message && (
-            <p className="text-green-500 text-sm">{message}</p>
-          )}
-          <button
-            type="submit"
-            className="bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600"
-          >
-            Update Authentication
-          </button>
-        </form>
-      </div>
-
-      <div className="bg-[#1A1A1A] rounded-lg p-6 mb-6">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold">Trading Accounts</h2>
-          <div className="text-gray-400">
-            Total Balance: ${totalBalance.toLocaleString()}
-          </div>
+      {loading ? (
+        <div className="text-center py-4">Loading accounts...</div>
+      ) : error ? (
+        <div className="bg-red-500/10 border border-red-500 text-red-500 p-4 rounded-lg mb-6">
+          {error}
         </div>
-
-        <form onSubmit={addAccount} className="mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <input
-              type="text"
-              placeholder="Account Name"
-              value={newAccount.name}
-              onChange={(e) => setNewAccount({ ...newAccount, name: e.target.value })}
-              className="bg-[#252525] rounded px-4 py-2"
-              required
-            />
-            <input
-              type="number"
-              placeholder="Initial Balance"
-              value={newAccount.initial_balance}
-              onChange={(e) => setNewAccount({ ...newAccount, initial_balance: e.target.value })}
-              className="bg-[#252525] rounded px-4 py-2"
-              required
-              step="0.01"
-              min="0"
-            />
-            <button
-              type="submit"
-              className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center justify-center gap-2"
-            >
-              <Plus className="w-4 h-4" /> Add Account
-            </button>
-          </div>
-        </form>
-
-        <div className="space-y-4">
-          {accounts.map(account => (
-            <div key={account.id} className="flex items-center justify-between bg-[#252525] p-4 rounded">
+      ) : (
+        <>
+          <div className="bg-[#1A1A1A] rounded-lg p-6 mb-6">
+            <h2 className="text-xl font-semibold mb-4">Authentication Settings</h2>
+            <form onSubmit={handleAuthUpdate} className="space-y-4">
               <div>
-                <h3 className="font-medium">{account.name}</h3>
-                <p className="text-gray-400">Initial Balance: ${account.initial_balance.toLocaleString()}</p>
+                <label className="block text-sm font-medium mb-1">Authentication Type</label>
+                <select
+                  value={authType}
+                  onChange={(e) => setAuthType(e.target.value as 'pin' | 'password')}
+                  className="w-full bg-[#252525] rounded px-4 py-2"
+                >
+                  <option value="pin">PIN</option>
+                  <option value="password">Password</option>
+                </select>
               </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  New {authType === 'pin' ? 'PIN' : 'Password'}
+                </label>
+                <input
+                  type={authType === 'pin' ? 'number' : 'password'}
+                  value={newValue}
+                  onChange={(e) => setNewValue(e.target.value)}
+                  className="w-full bg-[#252525] rounded px-4 py-2"
+                  maxLength={authType === 'pin' ? 4 : undefined}
+                />
+              </div>
+              {message && (
+                <p className="text-green-500 text-sm">{message}</p>
+              )}
               <button
-                onClick={() => deleteAccount(account.id)}
-                className="text-red-400 hover:text-red-500 p-2"
+                type="submit"
+                className="bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600"
               >
-                <Trash className="w-4 h-4" />
+                Update Authentication
               </button>
+            </form>
+          </div>
+
+          <div className="bg-[#1A1A1A] rounded-lg p-6 mb-6">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold">Trading Accounts</h2>
+              <div className="text-gray-400">
+                Total Balance: ${totalBalance.toLocaleString()}
+              </div>
             </div>
-          ))}
-        </div>
-      </div>
+
+            <form onSubmit={addAccount} className="mb-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <input
+                  type="text"
+                  placeholder="Account Name"
+                  value={newAccount.name}
+                  onChange={(e) => setNewAccount({ ...newAccount, name: e.target.value })}
+                  className="bg-[#252525] rounded px-4 py-2"
+                  required
+                />
+                <input
+                  type="number"
+                  placeholder="Initial Balance"
+                  value={newAccount.initial_balance}
+                  onChange={(e) => setNewAccount({ ...newAccount, initial_balance: e.target.value })}
+                  className="bg-[#252525] rounded px-4 py-2"
+                  required
+                  step="0.01"
+                  min="0"
+                />
+                <button
+                  type="submit"
+                  className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center justify-center gap-2"
+                >
+                  <Plus className="w-4 h-4" /> Add Account
+                </button>
+              </div>
+            </form>
+
+            <div className="space-y-4">
+              {accounts.map(account => (
+                <div key={account.id} className="flex items-center justify-between bg-[#252525] p-4 rounded">
+                  <div>
+                    <h3 className="font-medium">{account.name}</h3>
+                    <p className="text-gray-400">Initial Balance: ${account.initial_balance.toLocaleString()}</p>
+                  </div>
+                  <button
+                    onClick={() => deleteAccount(account.id)}
+                    className="text-red-400 hover:text-red-500 p-2"
+                  >
+                    <Trash className="w-4 h-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }
