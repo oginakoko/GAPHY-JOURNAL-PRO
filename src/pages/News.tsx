@@ -1,7 +1,37 @@
+import { useEffect } from 'react';
 import NewsCard from '../components/NewsCard';
 import { Newspaper } from 'lucide-react';
 
 function News() {
+  useEffect(() => {
+    const script = document.createElement('script');
+    script.src = "https://s3.tradingview.com/external-embedding/embed-widget-timeline.js";
+    script.type = "text/javascript";
+    script.async = true;
+    script.innerHTML = JSON.stringify({
+      "feedMode": "all_symbols",
+      "colorTheme": "dark",
+      "isTransparent": true,
+      "displayMode": "regular",
+      "width": "100%",
+      "height": "100%",
+      "locale": "en",
+      "autosize": true,
+      "interval": 5 // Auto scroll every 5 seconds
+    });
+
+    const widgetContainer = document.getElementById('tradingview-news');
+    if (widgetContainer) {
+      widgetContainer.appendChild(script);
+    }
+
+    return () => {
+      if (widgetContainer) {
+        widgetContainer.innerHTML = '';
+      }
+    };
+  }, []);
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3 mb-8">
@@ -14,14 +44,7 @@ function News() {
           <NewsCard />
         </div>
         <div className="bg-[#1A1A1A] rounded-lg overflow-hidden hover:ring-2 hover:ring-blue-500/20 transition-all">
-          <iframe 
-            src="https://s.tradingview.com/embed-widget/timeline/"
-            className="w-full h-full"
-            style={{
-              border: 'none',
-              background: '#1A1A1A'
-            }}
-          />
+          <div id="tradingview-news" className="tradingview-widget-container h-full" />
         </div>
       </div>
     </div>
