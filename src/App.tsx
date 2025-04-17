@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
-import { Settings, Plus, Activity } from 'lucide-react';
+import { Settings, Plus, Activity, Newspaper } from 'lucide-react';
 import Statistics from './pages/Statistics';
 import Journal from './pages/Journal';
 import { default as SettingsPage } from './pages/Settings';
@@ -10,6 +10,7 @@ import Auth from './components/Auth';
 import { supabase } from './lib/supabase';
 import { Session } from '@supabase/supabase-js';
 import TradeArchives from './pages/TradeArchives';
+import News from './pages/News';
 
 const DEFAULT_APP_STATE: AppState = {
   lastVisitedPage: '/',
@@ -58,6 +59,9 @@ function Header({ onLogout }: { onLogout: () => void }) {
         </button>
         <button onClick={() => navigate('/settings')} className="hover:text-gray-300">
           <Settings className="w-5 h-5" />
+        </button>
+        <button onClick={() => navigate('/news')} className="hover:text-gray-300">
+          <Newspaper className="w-5 h-5" />
         </button>
         <button onClick={() => navigate('/journal/new')} className="bg-white text-black p-2 rounded-lg ml-auto sm:ml-0">
           <Plus className="w-5 h-5" />
@@ -142,6 +146,7 @@ function AppContent() {
           <Route path="/journal/new" element={<Journal isNewTrade={true} />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/trades" element={<TradeArchives />} />
+          <Route path="/news" element={<News />} />
         </Routes>
       </div>
     </div>
