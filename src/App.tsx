@@ -1,16 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { Settings, Plus, Activity, Newspaper } from 'lucide-react';
-import Statistics from './pages/Statistics';
-import Journal from './pages/Journal';
-import { default as SettingsPage } from './pages/Settings';
 import useLocalStorage from './hooks/useLocalStorage';
 import { AppState } from './types';
 import Auth from './components/Auth';
 import { supabase } from './lib/supabase';
 import { Session } from '@supabase/supabase-js';
 import TradeArchives from './pages/TradeArchives';
-import News from './pages/News';
+
+// Replace direct imports with lazy imports
+const Statistics = lazy(() => import('./pages/Statistics'));
+const Journal = lazy(() => import('./pages/Journal'));
+const News = lazy(() => import('./pages/News'));
+const SettingsPage = lazy(() => import('./pages/Settings'));
 
 const DEFAULT_APP_STATE: AppState = {
   lastVisitedPage: '/',
@@ -77,6 +79,18 @@ function Header({ onLogout }: { onLogout: () => void }) {
   );
 }
 
+function LoadingFallback() {
+  return (
+    <div className="flex items-center justify-center min-h-[400px]">
+      <div className="animate-pulse space-y-4 w-full max-w-2xl">
+        <div className="h-8 bg-[#252525] rounded w-1/3"></div>
+        <div className="h-32 bg-[#252525] rounded"></div>
+        <div className="h-24 bg-[#252525] rounded"></div>
+      </div>
+    </div>
+  );
+}
+
 function AppContent() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -139,15 +153,17 @@ function AppContent() {
     <div className="min-h-screen bg-[#141414] text-white p-4 md:p-6 overflow-x-hidden">
       <div className="max-w-7xl mx-auto">
         <Header onLogout={handleLogout} />
-        <Routes>
-          <Route path="/" element={<Journal />} />
-          <Route path="/statistics" element={<Statistics />} />
-          <Route path="/journal" element={<Journal />} />
-          <Route path="/journal/new" element={<Journal isNewTrade={true} />} />
-          <Route path="/settings" element={<SettingsPage />} />
-          <Route path="/trades" element={<TradeArchives />} />
-          <Route path="/news" element={<News />} />
-        </Routes>
+        <Suspense fallback={<LoadingFallback />}>
+          <Routes>
+            <Route path="/" element={<Journal />} />
+            <Route path="/statistics" element={<Statistics />} />
+            <Route path="/journal" element={<Journal />} />
+            <Route path="/journal/new" element={<Journal isNewTrade={true} />} />
+            <Route path="/settings" element={<SettingsPage />} />
+            <Route path="/trades" element={<TradeArchives />} />
+            <Route path="/news" element={<News />} />
+          </Routes>
+        </Suspense>
       </div>
     </div>
   );

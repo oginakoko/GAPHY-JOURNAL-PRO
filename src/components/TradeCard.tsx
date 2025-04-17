@@ -1,5 +1,6 @@
 import { ArrowUpRight, ArrowDownRight, ExternalLink } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { memo } from 'react';
 
 interface TradeCardProps {
   trade: {
@@ -16,7 +17,7 @@ interface TradeCardProps {
   compact?: boolean;
 }
 
-function TradeCard({ trade, compact = false }: TradeCardProps) {
+const TradeCard = memo(function TradeCard({ trade, compact = false }: TradeCardProps) {
   if (!trade) return null;
   
   const isProfitable = trade.pl > 0;
@@ -29,6 +30,7 @@ function TradeCard({ trade, compact = false }: TradeCardProps) {
             src={trade.screenshot} 
             alt={`Trade ${trade.symbol}`} 
             className="w-full h-full object-cover"
+            loading="lazy"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-gray-500">
@@ -94,6 +96,6 @@ function TradeCard({ trade, compact = false }: TradeCardProps) {
       </div>
     </div>
   );
-}
+});
 
 export default TradeCard;
