@@ -1,47 +1,37 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState } from 'react';
 
-function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T) => void] {
-  // Initialize state with a callback to avoid unnecessary initial localStorage access
+function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T | ((val: T) => T)) => void] {
   const [storedValue, setStoredValue] = useState<T>(() => {
-    try {
-      if (typeof window === 'undefined') {
-        return initialValue;
-      }
+    if (typeof window === 'undefined') {
+      return initialValue;
+    }
 
+    try {
       const item = window.localStorage.getItem(key);
-      // Only parse stored json if it exists
       return item ? JSON.parse(item) : initialValue;
     } catch (error) {
       console.warn(`Error reading localStorage key "${key}":`, error);
-      // Initialize localStorage with initial value on error
-      window.localStorage.setItem(key, JSON.stringify(initialValue));
+      // If there's an error, return the initial value and try to clean up
+      try {
+        window.localStorage.removeItem(key);
+      } catch (e) {
+        console.warn('Could not clean up invalid localStorage value');
+      }
       return initialValue;
     }
   });
 
-  // Memoize the setValue function to avoid unnecessary re-renders
-  const setValue = useCallback((value: T) => {
+  const setValue = (value: T | ((val: T) => T)) => {
     try {
-      setStoredValue(value);
+      const valueToStore = value instanceof Function ? value(storedValue) : value;
+      setStoredValue(valueToStore);
       if (typeof window !== 'undefined') {
-        window.localStorage.setItem(key, JSON.stringify(value));
+        window.localStorage.setItem(key, JSON.stringify(valueToStore));
       }
     } catch (error) {
       console.warn(`Error setting localStorage key "${key}":`, error);
     }
-  }, [key]);
-
-  // Set initial value in localStorage if it doesn't exist
-  useEffect(() => {
-    try {
-      const item = window.localStorage.getItem(key);
-      if (item === null) {
-        window.localStorage.setItem(key, JSON.stringify(initialValue));
-      }
-    } catch (error) {
-      console.warn(`Error initializing localStorage key "${key}":`, error);
-    }
-  }, [key, initialValue]);
+  };
 
   return [storedValue, setValue];
 }

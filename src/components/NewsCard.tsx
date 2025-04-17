@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ExternalLink } from 'lucide-react';
+import { ExternalLink, AlertCircle } from 'lucide-react';
 
 interface NewsItem {
   title: string;
@@ -12,17 +12,37 @@ interface NewsItem {
 function NewsCard() {
   const [news, setNews] = useState<NewsItem[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchNews = async () => {
       try {
+        setLoading(true);
         const response = await fetch(
-          'https://newsapi.org/v2/top-headlines?country=us&category=business&apiKey=142e1dab1c5d4e739148d349d838d6dd'
+          'https://newsapi.org/v2/top-headlines?country=us&category=business&apiKey=142e1dab1c5d4e739148d349d838d6dd',
+          {
+            headers: {
+              'User-Agent': 'GaphyJournalPro/1.0',
+            }
+          }
         );
+        
+        if (!response.ok) {
+          throw new Error(`News API error: ${response.status}`);
+        }
+
         const data = await response.json();
-        setNews(data.articles);
+        if (data.articles && Array.isArray(data.articles)) {
+          setNews(data.articles);
+        } else {
+          throw new Error('Invalid news data format');
+        }
       } catch (error) {
         console.error('Error fetching news:', error);
+        setError(error instanceof Error ? error.message : 'Failed to load news');
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -31,7 +51,7 @@ function NewsCard() {
 
   useEffect(() => {
     if (news.length === 0) return;
-
+    
     const interval = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % news.length);
     }, 5000);
@@ -39,7 +59,30 @@ function NewsCard() {
     return () => clearInterval(interval);
   }, [news]);
 
-  if (!news.length) return <div>Loading...</div>;
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-full text-gray-400">
+        Loading news...
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full text-gray-400 p-6">
+        <AlertCircle className="w-8 h-8 mb-2 text-red-400" />
+        <p className="text-center">{error}</p>
+      </div>
+    );
+  }
+
+  if (!news.length) {
+    return (
+      <div className="flex items-center justify-center h-full text-gray-400">
+        No news available
+      </div>
+    );
+  }
 
   const currentNews = news[currentIndex];
 
