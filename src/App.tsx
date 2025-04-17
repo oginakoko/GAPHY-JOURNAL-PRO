@@ -1,24 +1,43 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
-import { Settings, Plus } from 'lucide-react';
+import { Settings, Plus, Activity, Newspaper } from 'lucide-react';
 import Statistics from './pages/Statistics';
 import Journal from './pages/Journal';
+import News from './pages/News';
 import { default as SettingsPage } from './pages/Settings';
 import useLocalStorage from './hooks/useLocalStorage';
 import { AppState } from './types';
 import Auth from './components/Auth';
 import { supabase } from './lib/supabase';
 import { Session } from '@supabase/supabase-js';
+import TradeArchives from './pages/TradeArchives';
 
 function Header({ onLogout }: { onLogout: () => void }) {
   const navigate = useNavigate();
 
   return (
     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
-      <div className="flex items-center gap-4 cursor-pointer" onClick={() => navigate('/')}>
-        <div className="text-2xl font-bold">G</div>
-        <div>
-          <div className="text-sm font-semibold">GAPHY JOURNAL PRO</div>
+      <div className="flex items-center gap-3 cursor-pointer group" onClick={() => navigate('/')}>
+        <div className="relative animate-[float_3s_ease-in-out_infinite]">
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-purple-500 rounded-lg blur-sm opacity-75 group-hover:opacity-100 transition-all duration-300 animate-[pulse_2s_ease-in-out_infinite]" />
+          <div className="relative bg-[#1A1A1A] rounded-lg p-2 border border-gray-800 group-hover:border-blue-500/50 transition-colors duration-300">
+            <div className="flex items-center">
+              <Activity className="w-5 h-5 text-blue-400 absolute group-hover:scale-110 transition-transform duration-300" />
+              <span className="text-2xl font-bold bg-gradient-to-r from-blue-400 via-purple-400 to-blue-400 bg-[size:200%] animate-[gradient-shift_3s_linear_infinite] bg-clip-text text-transparent ml-3">
+                G
+              </span>
+            </div>
+          </div>
+        </div>
+        <div className="overflow-hidden">
+          <div className="animate-[fade-in-left_0.5s_ease-out]">
+            <div className="text-sm font-bold tracking-wide bg-gradient-to-r from-white via-blue-100 to-white bg-[size:200%] animate-[gradient-shift_3s_linear_infinite] bg-clip-text text-transparent">
+              GAPHY JOURNAL PRO
+            </div>
+            <div className="text-xs text-gray-400 animate-[fade-in-left_0.9s_ease-out_2.0s] opacity-0 animate-fill-forwards">
+              Trading Excellence
+            </div>
+          </div>
         </div>
       </div>
       <nav className="flex items-center gap-4 sm:gap-8 w-full sm:w-auto">
@@ -27,6 +46,9 @@ function Header({ onLogout }: { onLogout: () => void }) {
         </button>
         <button onClick={() => navigate('/journal')} className="hover:text-gray-300">
           Journal
+        </button>
+        <button onClick={() => navigate('/news')} className="hover:text-gray-300">
+          <Newspaper className="w-5 h-5" />
         </button>
         <button onClick={() => navigate('/settings')} className="hover:text-gray-300">
           <Settings className="w-5 h-5" />
@@ -121,6 +143,8 @@ function AppContent() {
           <Route path="/journal" element={<Journal />} />
           <Route path="/journal/new" element={<Journal isNewTrade={true} />} />
           <Route path="/settings" element={<SettingsPage />} />
+          <Route path="/news" element={<News />} />
+          <Route path="/trades" element={<TradeArchives />} />
         </Routes>
       </div>
     </div>
