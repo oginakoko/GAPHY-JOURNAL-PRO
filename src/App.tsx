@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
-import { Settings, Plus, Activity, Newspaper } from 'lucide-react';
+import { Settings, Plus, Activity } from 'lucide-react';
 import Statistics from './pages/Statistics';
 import Journal from './pages/Journal';
-import News from './pages/News';
 import { default as SettingsPage } from './pages/Settings';
 import useLocalStorage from './hooks/useLocalStorage';
 import { AppState } from './types';
@@ -56,9 +55,6 @@ function Header({ onLogout }: { onLogout: () => void }) {
         </button>
         <button onClick={() => navigate('/journal')} className="hover:text-gray-300">
           Journal
-        </button>
-        <button onClick={() => navigate('/news')} className="hover:text-gray-300">
-          <Newspaper className="w-5 h-5" />
         </button>
         <button onClick={() => navigate('/settings')} className="hover:text-gray-300">
           <Settings className="w-5 h-5" />
@@ -145,7 +141,6 @@ function AppContent() {
           <Route path="/journal" element={<Journal />} />
           <Route path="/journal/new" element={<Journal isNewTrade={true} />} />
           <Route path="/settings" element={<SettingsPage />} />
-          <Route path="/news" element={<News />} />
           <Route path="/trades" element={<TradeArchives />} />
         </Routes>
       </div>
