@@ -167,10 +167,10 @@ function StatsBar({ winRate, trades, withdrawals, equity, deposits, profitLoss, 
         <div className="text-sm text-gray-400 mb-4">Market Hours</div>
         <div className="grid gap-3 h-[calc(100%-2rem)]">
           {[
-            { name: 'Sydney', start: 22, end: 6, color: 'from-pink-500/20 to-transparent' },
-            { name: 'Tokyo', start: 0, end: 8, color: 'from-yellow-500/20 to-transparent' },
-            { name: 'London', start: 8, end: 16, color: 'from-blue-500/20 to-transparent' },
-            { name: 'New York', start: 13, end: 21, color: 'from-green-500/20 to-transparent' },
+            { name: 'Sydney', start: 22, end: 6, color: 'from-pink-500/20' },
+            { name: 'Tokyo', start: 0, end: 8, color: 'from-yellow-500/20' },
+            { name: 'London', start: 8, end: 16, color: 'from-blue-500/20' },
+            { name: 'New York', start: 13, end: 21, color: 'from-green-500/20' }
           ].map((session) => {
             const currentHour = currentTime.getUTCHours();
             const currentMinute = currentTime.getUTCMinutes();
@@ -188,18 +188,21 @@ function StatsBar({ winRate, trades, withdrawals, equity, deposits, profitLoss, 
             return (
               <div
                 key={session.name}
-                className={`relative h-full min-h-[4rem] rounded-lg overflow-hidden border border-gray-700 transition-all duration-300 ${
+                className={`relative h-full min-h-[4rem] rounded-lg overflow-hidden border border-gray-700 
+                  transition-all duration-300 will-change-transform transform-gpu ${
                   isActive ? 'bg-gradient-to-r ' + session.color : 'bg-[#1f1f1f]'
                 }`}
-                style={{ boxShadow: isActive ? '0 0 12px 2px rgba(34,197,94,0.2)' : undefined }}
+                style={{ 
+                  boxShadow: isActive ? '0 0 12px 2px rgba(34,197,94,0.2)' : undefined,
+                }}
               >
                 {isActive && (
                   <div
-                    className="absolute left-0 bottom-0 w-full animate-pulse"
+                    className="absolute left-0 bottom-0 w-full bg-gradient-to-t from-[rgba(34,197,94,0.1)] to-[rgba(22,163,74,0.2)] transform-gpu"
                     style={{
                       height: `${progress}%`,
-                      background: 'linear-gradient(180deg, rgba(34,197,94,0.1) 0%, rgba(22,163,74,0.2) 100%)',
-                      transition: 'height 0.7s cubic-bezier(0.4,0,0.2,1)'
+                      transition: 'height 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                      willChange: 'height',
                     }}
                   />
                 )}

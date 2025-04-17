@@ -54,6 +54,8 @@
   width: 100%;
   background: rgba(22, 163, 74, 0.15); /* Exact green color from screenshot with opacity */
   transition: height 0.3s ease;
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
 .liquid-fill::before,
@@ -83,4 +85,19 @@
   100% {
     transform: translate(-50%, -75%) rotate(360deg);
   }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+.market-hours-animation {
+  backface-visibility: hidden;
+  perspective: 1000;
+  transform: translate3d(0, 0, 0);
 }
