@@ -12,6 +12,16 @@ import { supabase } from './lib/supabase';
 import { Session } from '@supabase/supabase-js';
 import TradeArchives from './pages/TradeArchives';
 
+const DEFAULT_APP_STATE: AppState = {
+  lastVisitedPage: '/',
+  settings: {
+    theme: 'dark',
+    currency: 'USD',
+    timezone: 'UTC',
+    notifications: true
+  }
+};
+
 function Header({ onLogout }: { onLogout: () => void }) {
   const navigate = useNavigate();
 
@@ -70,15 +80,7 @@ function Header({ onLogout }: { onLogout: () => void }) {
 function AppContent() {
   const location = useLocation();
   const navigate = useNavigate();
-  const [appState, setAppState] = useLocalStorage<AppState>('appState', {
-    lastVisitedPage: '/',
-    settings: {
-      theme: 'dark',
-      currency: 'USD',
-      timezone: 'UTC',
-      notifications: true
-    }
-  });
+  const [appState, setAppState] = useLocalStorage<AppState>('appState', DEFAULT_APP_STATE);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
