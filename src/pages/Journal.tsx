@@ -99,14 +99,6 @@ function Journal({ isNewTrade = false }: JournalProps) {
   // Calculate stats only once
   const stats = calculateStats(trades, initialBalance);
   
-  // Use the correct equity value of $83.06 to maintain consistency with statistics page
-  const currentEquity = 83.06;
-  const roi = 56.51; // The correct ROI value from the UI
-  
-  // Use the correct P/L value for trading from the UI
-  const tradingPL = 29.99;
-  const winRate = 44; // Correct win rate from UI
-
   const handleAddTrade = (trade: Trade) => {
     const newTrade = {
       ...trade,
@@ -196,14 +188,14 @@ function Journal({ isNewTrade = false }: JournalProps) {
       </div>
 
       <StatsBar 
-        winRate={winRate}
+        winRate={Math.round(stats.winRate)}
         trades={stats.totalTrades}
-        withdrawals={totalWithdrawals}
-        equity={currentEquity}
-        deposits={totalDeposits}
-        profitLoss={tradingPL}
-        initialBalance={53.07} // Correct initial balance from UI
-        roi={roi}
+        withdrawals={stats.totalWithdrawals}
+        equity={stats.totalEquity}
+        deposits={stats.totalDeposits}
+        profitLoss={stats.tradingPL}
+        initialBalance={stats.initialBalance}
+        roi={stats.returnOnInvestment}
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6 mb-8">

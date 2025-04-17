@@ -1,8 +1,11 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, Cell } from 'recharts';
 import { useTradeData } from '../hooks/useTradeData';
 import { useAccounts } from '../hooks/useAccounts';
+import { ExternalLink, Newspaper } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import TradingStats from '../components/TradingStats';
+import TradeCard from '../components/TradeCard';
 
 function Statistics() {
   const { trades, loading: tradesLoading, error: tradesError } = useTradeData();
@@ -191,6 +194,15 @@ function Statistics() {
     
     return stats;
   }, [activeTrades]);
+
+  const [currentTradeIndex, setCurrentTradeIndex] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTradeIndex((prev) => (prev + 1) % filteredTrades.length);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [filteredTrades.length]);
 
   if (tradesLoading || accountsLoading) return <div>Loading...</div>;
   if (tradesError || accountsError) return <div>Error: {tradesError || accountsError}</div>;
@@ -510,41 +522,42 @@ function Statistics() {
             {/* Right side - Detailed Table */}
             <div>
               <h3 className="text-lg font-medium mb-4">Symbol Performance</h3>
-              <div className="overflow-auto max-h-[400px]">
-                <table className="w-full text-sm">
-                  <thead className="text-gray-400 sticky top-0 bg-[#1A1A1A]">
-                    <tr>
-                      <th className="text-left py-2 px-2">Symbol</th>
-                      <th className="text-right py-2 px-2">P/L</th>
-                      <th className="text-right py-2 px-2">Trades</th>
-                      <th className="text-right py-2 px-2">Win %</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-800">
-                    {Object.entries(symbolStats)
-                      .filter(([, stats]) => stats.totalTrades > 0)
-                      .sort((a, b) => Math.abs(b[1].profitLoss) - Math.abs(a[1].profitLoss))
-                      .map(([symbol, stats]) => (
-                        <tr key={symbol} className="hover:bg-[#252525]">
-                          <td className="py-2 px-2">
-                            <div>{symbol}</div>
-                            <div className="text-xs text-gray-400">{stats.instrument}</div>
-                          </td>
-                          <td className={`text-right py-2 px-2 ${
-                            stats.profitLoss >= 0 ? 'text-green-400' : 'text-red-400'
-                          }`}>
-                            ${stats.profitLoss.toFixed(2)}
-                          </td>
-                          <td className="text-right py-2 px-2">
-                            {stats.totalTrades}
-                          </td>
-                          <td className="text-right py-2 px-2">
-                            {((stats.winningTrades / stats.totalTrades) * 100).toFixed(1)}%
-                          </td>
-                        </tr>
-                      ))}
-                  </tbody>
-                </table>
+              <div className="overflow-hidden relative">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-medium">Recent Trades</h3>
+                  <Link 
+                    to="/trades"
+                    className="text-sm text-blue-400 hover:text-blue-300 flex items-center gap-2"
+                  >
+                    View all trades <ExternalLink size={14} />
+                  </Link>
+                </div>
+                
+                <div className="relative h-[400px]">
+                  {filteredTrades.length > 0 ? (
+                    <TradeCard 
+                      trade={filteredTrades[currentTradeIndex]} 
+                      compact 
+                    />
+                  ) : (
+                    <div className="flex items-center justify-center h-full text-gray-400">
+                      No trades to display
+                    </div>
+                  )}
+                </div>
+                
+                {filteredTrades.length > 0 && (
+                  <div className="flex justify-center gap-2 mt-4">
+                    {filteredTrades.map((_, index) => (
+                      <div
+                        key={index}
+                        className={`w-2 h-2 rounded-full transition-colors ${
+                          index === currentTradeIndex ? 'bg-blue-400' : 'bg-gray-600'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </div>

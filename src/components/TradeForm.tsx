@@ -71,154 +71,158 @@ function TradeForm({ trade, onSubmit, onClose, selectedInstrument }: TradeFormPr
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
-      <div className="bg-[#1A1A1A] rounded-lg w-full max-w-lg p-6">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold">{trade ? 'Edit Trade' : 'New Trade'}</h2>
-          <button onClick={onClose} className="hover:bg-[#252525] p-2 rounded">
-            <X className="w-6 h-6" />
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {selectedInstrument === 'all' && (
-            <div>
-              <label className="block text-sm font-medium text-gray-400 mb-1">Instrument Type</label>
-              <select
-                value={formData.instrument}
-                onChange={e => setFormData({ ...formData, instrument: e.target.value as InstrumentType })}
-                className="w-full bg-[#252525] rounded px-4 py-2 text-white"
-                required
-              >
-                <option value="Stocks">Stocks</option>
-                <option value="Options">Options</option>
-                <option value="Forex">Forex</option>
-                <option value="Crypto">Crypto</option>
-                <option value="Futures">Futures</option>
-              </select>
-            </div>
-          )}
-
-          <div>
-            <label className="block text-sm font-medium text-gray-400 mb-1">{getSymbolLabel()}</label>
-            <input
-              type="text"
-              value={formData.symbol}
-              onChange={e => setFormData({ ...formData, symbol: e.target.value.toUpperCase() })}
-              className="w-full bg-[#252525] rounded px-4 py-2 text-white"
-              required
-            />
+    <div className="fixed inset-0 z-50 overflow-auto bg-black bg-opacity-50 flex items-center justify-center p-4">
+      <div className="bg-[#1A1A1A] rounded-lg w-full max-w-2xl">
+        <div className="p-6">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-xl font-bold">{trade ? 'Edit Trade' : 'New Trade'}</h2>
+            <button onClick={onClose} className="text-gray-400 hover:text-white">
+              <X size={24} />
+            </button>
           </div>
+          
+          <div className="max-h-[70vh] overflow-y-auto pr-4 space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {selectedInstrument === 'all' && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-400 mb-1">Instrument Type</label>
+                  <select
+                    value={formData.instrument}
+                    onChange={e => setFormData({ ...formData, instrument: e.target.value as InstrumentType })}
+                    className="w-full bg-[#252525] rounded px-4 py-2 text-white"
+                    required
+                  >
+                    <option value="Stocks">Stocks</option>
+                    <option value="Options">Options</option>
+                    <option value="Forex">Forex</option>
+                    <option value="Crypto">Crypto</option>
+                    <option value="Futures">Futures</option>
+                  </select>
+                </div>
+              )}
 
-          <div>
-            <label className="block text-sm font-medium text-gray-400 mb-1">Date</label>
-            <input
-              type="date"
-              value={formData.date}
-              onChange={e => setFormData({ ...formData, date: e.target.value })}
-              className="w-full bg-[#252525] rounded px-4 py-2 text-white"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-400 mb-1">Side</label>
-            <select
-              value={formData.side}
-              onChange={e => setFormData({ ...formData, side: e.target.value as 'Buy' | 'Sell' })}
-              className="w-full bg-[#252525] rounded px-4 py-2 text-white"
-              required
-            >
-              <option value="Buy">Buy</option>
-              <option value="Sell">Sell</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-400 mb-1">{getQtyLabel()}</label>
-            <input
-              type="number"
-              value={formData.qty}
-              onChange={e => setFormData({ 
-                ...formData, 
-                qty: formData.instrument === 'Forex' 
-                  ? parseFloat(e.target.value) 
-                  : parseInt(e.target.value) 
-              })}
-              className="w-full bg-[#252525] rounded px-4 py-2 text-white"
-              required
-              min={formData.instrument === 'Forex' ? '0.01' : '1'}
-              step={formData.instrument === 'Forex' ? '0.01' : '1'}
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-400 mb-1">Price</label>
-            <input
-              type="number"
-              value={formData.price}
-              onChange={e => setFormData({ ...formData, price: parseFloat(e.target.value) })}
-              className="w-full bg-[#252525] rounded px-4 py-2 text-white"
-              required
-              step="0.01"
-              min="0"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-400 mb-1">P/L</label>
-            <input
-              type="number"
-              value={formData.pl}
-              onChange={e => setFormData({ ...formData, pl: parseFloat(e.target.value) })}
-              className="w-full bg-[#252525] rounded px-4 py-2 text-white"
-              required
-              step="0.01"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-400 mb-1">Screenshot</label>
-            <div className="flex items-center gap-4">
-              <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleFileChange}
-                accept="image/*"
-                className="hidden"
-              />
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="bg-[#252525] px-4 py-2 rounded-lg flex items-center gap-2"
-              >
-                <Upload className="w-4 h-4" />
-                Upload Image
-              </button>
-            </div>
-            {previewUrl && (
-              <div className="mt-2">
-                <img src={previewUrl} alt="Trade Screenshot" className="max-h-40 rounded" />
+              <div>
+                <label className="block text-sm font-medium text-gray-400 mb-1">{getSymbolLabel()}</label>
+                <input
+                  type="text"
+                  value={formData.symbol}
+                  onChange={e => setFormData({ ...formData, symbol: e.target.value.toUpperCase() })}
+                  className="w-full bg-[#252525] rounded px-4 py-2 text-white"
+                  required
+                />
               </div>
-            )}
-          </div>
 
-          <div className="flex justify-end gap-4 mt-6">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 rounded-lg bg-[#252525] hover:bg-[#303030]"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="px-4 py-2 rounded-lg bg-white text-black hover:bg-gray-200"
-            >
-              {trade ? 'Save Changes' : 'Add Trade'}
-            </button>
+              <div>
+                <label className="block text-sm font-medium text-gray-400 mb-1">Date</label>
+                <input
+                  type="date"
+                  value={formData.date}
+                  onChange={e => setFormData({ ...formData, date: e.target.value })}
+                  className="w-full bg-[#252525] rounded px-4 py-2 text-white"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-400 mb-1">Side</label>
+                <select
+                  value={formData.side}
+                  onChange={e => setFormData({ ...formData, side: e.target.value as 'Buy' | 'Sell' })}
+                  className="w-full bg-[#252525] rounded px-4 py-2 text-white"
+                  required
+                >
+                  <option value="Buy">Buy</option>
+                  <option value="Sell">Sell</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-400 mb-1">{getQtyLabel()}</label>
+                <input
+                  type="number"
+                  value={formData.qty}
+                  onChange={e => setFormData({ 
+                    ...formData, 
+                    qty: formData.instrument === 'Forex' 
+                      ? parseFloat(e.target.value) 
+                      : parseInt(e.target.value) 
+                  })}
+                  className="w-full bg-[#252525] rounded px-4 py-2 text-white"
+                  required
+                  min={formData.instrument === 'Forex' ? '0.01' : '1'}
+                  step={formData.instrument === 'Forex' ? '0.01' : '1'}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-400 mb-1">Price</label>
+                <input
+                  type="number"
+                  value={formData.price}
+                  onChange={e => setFormData({ ...formData, price: parseFloat(e.target.value) })}
+                  className="w-full bg-[#252525] rounded px-4 py-2 text-white"
+                  required
+                  step="0.01"
+                  min="0"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-400 mb-1">P/L</label>
+                <input
+                  type="number"
+                  value={formData.pl}
+                  onChange={e => setFormData({ ...formData, pl: parseFloat(e.target.value) })}
+                  className="w-full bg-[#252525] rounded px-4 py-2 text-white"
+                  required
+                  step="0.01"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-400 mb-1">Screenshot</label>
+                <div className="flex items-center gap-4">
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleFileChange}
+                    accept="image/*"
+                    className="hidden"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="bg-[#252525] px-4 py-2 rounded-lg flex items-center gap-2"
+                  >
+                    <Upload className="w-4 h-4" />
+                    Upload Image
+                  </button>
+                </div>
+                {previewUrl && (
+                  <div className="mt-2">
+                    <img src={previewUrl} alt="Trade Screenshot" className="max-h-40 rounded" />
+                  </div>
+                )}
+              </div>
+
+              <div className="flex justify-end gap-4 mt-6">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="px-4 py-2 rounded-lg bg-[#252525] hover:bg-[#303030]"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 rounded-lg bg-white text-black hover:bg-gray-200"
+                >
+                  {trade ? 'Save Changes' : 'Add Trade'}
+                </button>
+              </div>
+            </form>
           </div>
-        </form>
+        </div>
       </div>
     </div>
   );
