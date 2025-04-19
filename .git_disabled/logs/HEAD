@@ -1,0 +1,20 @@
+0000000000000000000000000000000000000000 61ff3d8175a0cc176644ad122e367a279ad4bcf5 oginakoko <gaphyllc@gmail.com> 1743961466 +0300	commit (initial): Initial commit
+61ff3d8175a0cc176644ad122e367a279ad4bcf5 9a92f23190c608f215e2f2faa9ca3459a0d6c43d oginakoko <gaphyllc@gmail.com> 1743961828 +0300	commit: Initial commit
+9a92f23190c608f215e2f2faa9ca3459a0d6c43d 0000000000000000000000000000000000000000 oginakoko <gaphyllc@gmail.com> 1743961829 +0300	Branch: renamed refs/heads/master to refs/heads/main
+0000000000000000000000000000000000000000 9a92f23190c608f215e2f2faa9ca3459a0d6c43d oginakoko <gaphyllc@gmail.com> 1743961829 +0300	Branch: renamed refs/heads/master to refs/heads/main
+9a92f23190c608f215e2f2faa9ca3459a0d6c43d 9a92f23190c608f215e2f2faa9ca3459a0d6c43d oginakoko <gaphyllc@gmail.com> 1743963582 +0300	reset: moving to HEAD
+9a92f23190c608f215e2f2faa9ca3459a0d6c43d 276a374d687f1c24725f05113dff89121f1d922d oginakoko <gaphyllc@gmail.com> 1743963584 +0300	commit: Update app with working env and deployment config
+276a374d687f1c24725f05113dff89121f1d922d 498509f4fc2152e09cba9514d98ba60bbe83fdb1 oginakoko <gaphyllc@gmail.com> 1744129318 +0300	commit: Update app with working env and deployment config
+498509f4fc2152e09cba9514d98ba60bbe83fdb1 498509f4fc2152e09cba9514d98ba60bbe83fdb1 oginakoko <gaphyllc@gmail.com> 1744129411 +0300	reset: moving to HEAD
+498509f4fc2152e09cba9514d98ba60bbe83fdb1 966996b14b29394763aed644279137ff8bc6e0a1 oginakoko <gaphyllc@gmail.com> 1744131987 +0300	commit: Initial commit
+966996b14b29394763aed644279137ff8bc6e0a1 fdf3a863f6166e4ab66a1856b6edb94a212736ca oginakoko <gaphyllc@gmail.com> 1744820388 +0300	commit: Add trading stats components and improve metrics layout
+fdf3a863f6166e4ab66a1856b6edb94a212736ca b0da299e97efb904c40efac3aaceae0990625486 oginakoko <gaphyllc@gmail.com> 1744868570 +0300	commit: feat: add trade archives and news components with TradingView integration
+b0da299e97efb904c40efac3aaceae0990625486 a4cd0ebcd635ad6c33b9e4ea89709cbd5333b765 oginakoko <gaphyllc@gmail.com> 1744868606 +0300	commit: feat: improve branding with new animated logo and UI enhancements
+a4cd0ebcd635ad6c33b9e4ea89709cbd5333b765 ad7ce5bbf1020824ae69663ddc4068f8144ad7e1 oginakoko <gaphyllc@gmail.com> 1744868623 +0300	commit: refactor: update trade management and statistics visualization
+ad7ce5bbf1020824ae69663ddc4068f8144ad7e1 93f9c9a587124b269f1b9e09f07570fb0a2b6cfc oginakoko <gaphyllc@gmail.com> 1744869082 +0300	commit: fix: handle news API errors and localStorage initialization
+93f9c9a587124b269f1b9e09f07570fb0a2b6cfc c5c414ffc3efc1d98e2aa3b1f4a012bbbb30c5fb oginakoko <gaphyllc@gmail.com> 1744869813 +0300	commit: fix: resolve production issues
+c5c414ffc3efc1d98e2aa3b1f4a012bbbb30c5fb f1186dc449c5e6cd3e687f617cfe4a6a55cbaaa2 oginakoko <gaphyllc@gmail.com> 1744869939 +0300	commit: chore: remove news feature temporarily
+f1186dc449c5e6cd3e687f617cfe4a6a55cbaaa2 5b3d0c74517015801d574357c5c821d378b36b46 oginakoko <gaphyllc@gmail.com> 1744870103 +0300	commit: feat: re-add news feature with static content
+5b3d0c74517015801d574357c5c821d378b36b46 cdb677ffccfe76aa25f1870771493499b5872daa oginakoko <gaphyllc@gmail.com> 1744870752 +0300	commit: feat: improve TradingView news widget with dark theme and auto-scroll
+cdb677ffccfe76aa25f1870771493499b5872daa 687950785ff9dffbdddca983842493d84a574d3f oginakoko <gaphyllc@gmail.com> 1744871118 +0300	commit: perf: optimize app performance and loading times
+687950785ff9dffbdddca983842493d84a574d3f f5a097279027504f672c6b8d5cea993ad3e605a6 oginakoko <gaphyllc@gmail.com> 1744871516 +0300	commit: perf: optimize market hours animations for better performance

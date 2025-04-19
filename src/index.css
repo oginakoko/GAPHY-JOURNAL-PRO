@@ -1,0 +1,149 @@
+/* filepath: c:\Users\HP\OneDrive\Documents\gaphy jornal pro\project-bolt-sb1-szmcjbkh\project\src\index.css */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@keyframes scroll {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes gradient-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-5px); }
+  100% { transform: translateY(0px); }
+}
+
+@keyframes fade-in-left {
+  0% { 
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  100% { 
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-scroll {
+  animation: scroll 20s linear infinite;
+  display: inline-flex;
+  width: 200%; /* Ensures the duplicated content fits in the container */
+}
+
+/* Liquid fill animation */
+.session-container {
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(2px);
+}
+
+.liquid-fill {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  background: rgba(22, 163, 74, 0.15); /* Exact green color from screenshot with opacity */
+  transition: height 0.3s ease;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+.liquid-fill::before,
+.liquid-fill::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  background: rgba(34, 197, 94, 0.4);
+  width: 200%;
+  height: 200%;
+  border-radius: 38% 42%;
+  transform: translate(-50%, -75%);
+  animation: liquid-wave 6s infinite linear;
+}
+
+.liquid-fill::after {
+  border-radius: 44% 56%;
+  background: rgba(34, 197, 94, 0.3);
+  transform: translate(-50%, -125%);
+  animation: liquid-wave 8s infinite linear;
+}
+
+@keyframes liquid-wave {
+  0% {
+    transform: translate(-50%, -75%) rotate(0deg);
+  }
+  100% {
+    transform: translate(-50%, -75%) rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+.market-hours-animation {
+  backface-visibility: hidden;
+  perspective: 1000;
+  transform: translate3d(0, 0, 0);
+}
+
+@layer utilities {
+  .glass-effect {
+    @apply bg-white/[0.02] backdrop-blur-xl border border-white/5;
+  }
+  
+  .premium-card {
+    @apply relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#1E1E1E] via-[#252525] to-[#1A1A1A] border border-white/5;
+  }
+
+  .premium-text {
+    @apply bg-gradient-to-r from-white via-blue-100 to-white bg-clip-text text-transparent;
+  }
+}
+
+/* Premium animations */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 0.8; }
+}
+
+@layer base {
+  body {
+    @apply text-white;
+  }
+}
+
+@layer components {
+  .text-default {
+    @apply text-white/90;
+  }
+  
+  .text-secondary {
+    @apply text-white/80;
+  }
+  
+  .text-muted {
+    @apply text-white/60;
+  }
+}
