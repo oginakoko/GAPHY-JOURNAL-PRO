@@ -1,0 +1,16 @@
+[33mf5a0972[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m perf: optimize market hours animations for better performance
+[33m6879507[m perf: optimize app performance and loading times
+[33mcdb677f[m feat: improve TradingView news widget with dark theme and auto-scroll
+[33m5b3d0c7[m feat: re-add news feature with static content
+[33mf1186dc[m chore: remove news feature temporarily
+[33mc5c414f[m fix: resolve production issues
+[33m93f9c9a[m fix: handle news API errors and localStorage initialization
+[33mad7ce5b[m refactor: update trade management and statistics visualization
+[33ma4cd0eb[m feat: improve branding with new animated logo and UI enhancements
+[33mb0da299[m feat: add trade archives and news components with TradingView integration
+[33mfdf3a86[m Add trading stats components and improve metrics layout
+[33m966996b[m Initial commit
+[33m498509f[m Update app with working env and deployment config
+[33m276a374[m Update app with working env and deployment config
+[33m9a92f23[m Initial commit
+[33m61ff3d8[m Initial commit

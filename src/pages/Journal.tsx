@@ -1,5 +1,4 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Link } from 'react-router-dom';
 import TradeTable from '../components/TradeTable';
 import StatsBar from '../components/StatsBar';
 import TradePlannerModal from '../components/TradePlannerModal';
@@ -13,7 +12,7 @@ import { TimeFilter, TimeRange } from '../components/TimeFilter';
 import { useAccounts } from '../hooks/useAccounts';
 import { calculateStats } from '../lib/statsUtils';
 import { motion } from 'framer-motion';
-import { BookOpen, Pencil, Trash2, PlusCircle, Wallet } from 'lucide-react';
+import { BookOpen, PlusCircle, Wallet } from 'lucide-react';
 import TickerTape from '../components/TickerTape';
 import { withPageWrapper } from '../components/PageWrapper';
 
@@ -151,10 +150,10 @@ function Journal({ isNewTrade = false }: JournalProps) {
     try {
       await addWithdrawal(amount, description);
       setIsWithdrawalFormOpen(false);
-      // Refresh trades to update balances
-      await refetchTrades();
+      refetchTrades(); // Refresh data after withdrawal
     } catch (error) {
-      console.error('Error processing withdrawal:', error);
+      console.error('Withdrawal failed:', error);
+      // You might want to show an error message to the user
     }
   };
 
@@ -197,9 +196,8 @@ function Journal({ isNewTrade = false }: JournalProps) {
 
   return (
     <>
+      <TickerTape />
       <div className="space-y-8">
-        <TickerTape />
-        
         {/* Header with Action Buttons */}
         <div className="flex justify-between items-center mb-6">
           <div>
@@ -454,4 +452,4 @@ function Journal({ isNewTrade = false }: JournalProps) {
   );
 }
 
-export default withPageWrapper(Journal, 'Trading Journal');
+export default withPageWrapper(Journal, 'Journal');

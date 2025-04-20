@@ -6,28 +6,46 @@ import { withPageWrapper } from '../components/PageWrapper';
 
 function News() {
   useEffect(() => {
-    const script = document.createElement('script');
-    script.src = "https://s3.tradingview.com/external-embedding/embed-widget-timeline.js";
-    script.type = "text/javascript";
-    script.async = true;
-    script.innerHTML = JSON.stringify({
-      "feedMode": "all_symbols",
-      "colorTheme": "dark",
-      "isTransparent": true,
-      "displayMode": "regular",
-      "width": "100%",
-      "height": "100%",
-      "locale": "en"
-    });
+    const loadWidget = () => {
+      const widgetContainer = document.getElementById('tradingview-news');
+      if (!widgetContainer) {
+        console.warn('TradingView widget container not found');
+        return;
+      }
 
-    const widgetContainer = document.getElementById('tradingview-news');
-    if (widgetContainer) {
+      // Clear any existing widget
+      widgetContainer.innerHTML = '';
+
+      const script = document.createElement('script');
+      script.src = "https://s3.tradingview.com/external-embedding/embed-widget-timeline.js";
+      script.type = "text/javascript";
+      script.async = true;
+      script.innerHTML = JSON.stringify({
+        "feedMode": "all_symbols",
+        "colorTheme": "dark",
+        "isTransparent": true,
+        "displayMode": "regular",
+        "width": "100%",
+        "height": "100%",
+        "locale": "en"
+      });
+
+      script.onerror = () => {
+        console.error('Failed to load TradingView widget script');
+      };
+
       widgetContainer.appendChild(script);
-    }
+    };
+
+    // Wait briefly to ensure DOM is ready
+    const timer = setTimeout(loadWidget, 100);
+    return () => clearTimeout(timer);
 
     return () => {
-      if (widgetContainer) {
-        widgetContainer.innerHTML = '';
+      clearTimeout(timer);
+      const container = document.getElementById('tradingview-news');
+      if (container) {
+        container.innerHTML = '';
       }
     };
   }, []);

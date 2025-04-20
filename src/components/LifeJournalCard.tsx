@@ -10,7 +10,8 @@ interface LifeJournalCardProps {
 }
 
 export default function LifeJournalCard({ entry, onEdit, onDelete }: LifeJournalCardProps) {
-  const moodColor = entry.mood ? MOODS[entry.mood]?.color : 'bg-blue-400';
+  const isValidMood = (mood: any): mood is MoodType => mood && Object.keys(MOODS).includes(mood);
+  const moodColor = isValidMood(entry.mood) ? MOODS[entry.mood].color : 'bg-blue-400';
 
   return (
     <motion.div
@@ -42,7 +43,7 @@ export default function LifeJournalCard({ entry, onEdit, onDelete }: LifeJournal
 
       <div className="absolute bottom-4 left-6 flex items-center gap-2">
         <span className={`w-2 h-2 rounded-full ${moodColor}`}></span>
-        <span className="text-sm text-white/40">{entry.date || ''}</span>
+        <span className="text-sm text-white/40">{entry.date}</span>
       </div>
     </motion.div>
   );

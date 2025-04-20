@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect, memo } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart as ReLineChart, Line, Cell } from 'recharts';
 import { useTradeData } from '../hooks/useTradeData';
 import { useAccounts } from '../hooks/useAccounts';
@@ -309,6 +309,7 @@ function Statistics() {
 
   const SymbolPerformanceCard = ({ trade }: { trade: any }) => {
     const getTradeScreenshot = () => {
+      if (!trade) return '/images/charts/default-chart.png';
       if (trade.screenshot) return trade.screenshot;
       
       // Get asset type folder
@@ -326,7 +327,7 @@ function Statistics() {
         <div className="h-[280px] relative"> {/* Increased height for better visibility */}
           <img 
             src={getTradeScreenshot()}
-            alt={`${trade.symbol} chart`}
+            alt={trade ? `${trade.symbol} chart` : 'Default chart'}
             className="w-full h-full object-cover"
             onError={(e) => {
               console.log('Image failed to load, using default chart');
@@ -448,12 +449,12 @@ function Statistics() {
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-                  <XAxis 
-                    dataKey="date" 
+                  <XAxis
+                    dataKey="date"
                     stroke="rgba(255,255,255,0.5)"
                     tick={{ fill: 'rgba(255,255,255,0.5)' }}
                   />
-                  <YAxis 
+                  <YAxis
                     stroke="rgba(255,255,255,0.5)"
                     tick={{ fill: 'rgba(255,255,255,0.5)' }}
                   />
@@ -465,14 +466,14 @@ function Statistics() {
                       boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
                     }}
                   />
-                  <Line 
-                    type="monotone" 
-                    dataKey="equity" 
+                  <Line
+                    type="monotone"
+                    dataKey="equity"
                     stroke="url(#equityLine)"
                     strokeWidth={3}
                     dot={false}
-                    activeDot={{ 
-                      r: 8, 
+                    activeDot={{
+                      r: 8,
                       fill: '#FF2D78',
                       stroke: '#fff',
                       strokeWidth: 2
@@ -486,84 +487,7 @@ function Statistics() {
         </motion.div>
 
         {/* Monthly P/L Chart */}
-        <motion.div
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#1A1A1A] via-[#252525] to-[#1A1A1A] p-6"
-        >
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-blue-500/5 via-transparent to-transparent" />
-          <div className="relative z-10">
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-3">
-                <PieChart className="w-5 h-5 text-blue-400" />
-                <h3 className="text-lg font-medium text-white/90">Monthly P/L</h3>
-              </div>
-              <button className="flex items-center gap-2 text-sm text-white/40 hover:text-white/60 transition-colors">
-                View Details <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
-            
-            {/* Enhanced Monthly P/L Chart */}
-            <div className="h-[400px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart 
-                  data={Object.entries(stats.monthlyPL)
-                    .map(([month, pl]) => ({ 
-                      month: month.split('-')[1], // Only show month part
-                      fullMonth: month, // Keep full date for sorting
-                      pl: Math.round(pl * 100) / 100
-                    }))
-                    .sort((a, b) => new Date(a.fullMonth).getTime() - new Date(b.fullMonth).getTime())
-                  }
-                >
-                  <defs>
-                    <linearGradient id="profitGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#00C49F" stopOpacity={0.8}/>
-                      <stop offset="100%" stopColor="#00C49F" stopOpacity={0.3}/>
-                    </linearGradient>
-                    <linearGradient id="lossGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#FF8042" stopOpacity={0.8}/>
-                      <stop offset="100%" stopColor="#FF8042" stopOpacity={0.3}/>
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-                  <XAxis 
-                    dataKey="month" 
-                    stroke="#666"
-                    tickFormatter={(month) => month}
-                  />
-                  <YAxis stroke="#666" />
-                  <Tooltip
-                    formatter={(value) => `$${Number(value).toFixed(2)}`}
-                    contentStyle={{
-                      backgroundColor: '#1A1A1A',
-                      border: '1px solid #333',
-                      borderRadius: '4px',
-                      color: '#fff'
-                    }}
-                    labelStyle={{
-                      color: '#fff'
-                    }}
-                    cursor={{ fill: 'rgba(255, 255, 255, 0.1)' }}
-                  />
-                  <Bar 
-                    dataKey="pl" 
-                    radius={[4, 4, 0, 0]}
-                  >
-                    {Object.entries(stats.monthlyPL).map(([, pl], index) => (
-                      <Cell 
-                        key={`cell-${index}`} 
-                        fill={pl >= 0 ? 'url(#profitGradient)' : 'url(#lossGradient)'}
-                        stroke={pl >= 0 ? '#00C49F' : '#FF8042'}
-                        strokeWidth={1}
-                      />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-        </motion.div>
+        <MemoizedMonthlyPLChart stats={stats} />
 
         {/* P/L by Symbol Card */}
         <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#1A1A1A] via-[#252525] to-[#1A1A1A] p-6">
@@ -706,5 +630,147 @@ function Statistics() {
     </motion.div>
   );
 }
+
+// Memoized Chart Components
+const MemoizedEquityChart = memo(({ stats }: { stats: any }) => (
+  <motion.div
+    initial={{ x: -20, opacity: 0 }}
+    animate={{ x: 0, opacity: 1 }}
+    className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#1E1E1E] via-[#252525] to-[#1A1A1A] p-8 border border-white/5"
+  >
+    <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-blue-500/5 via-transparent to-transparent" />
+    <div className="relative z-10">
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-3">
+          <TrendingUp className="w-5 h-5 text-blue-400" />
+          <h3 className="text-lg font-medium text-white/90">Equity Curve</h3>
+        </div>
+        <button className="flex items-center gap-2 text-sm text-white/40 hover:text-white/60 transition-colors">
+          View Details <ChevronRight className="w-4 h-4" />
+        </button>
+      </div>
+      
+      {/* Enhanced Equity Chart */}
+      <div className="h-[400px]">
+        <ResponsiveContainer width="100%" height="100%">
+          <ReLineChart data={stats.equityCurveData}>
+            <defs>
+              <linearGradient id="equityGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#FF2D78" stopOpacity={0.3}/>
+                <stop offset="95%" stopColor="#FF2D78" stopOpacity={0}/>
+              </linearGradient>
+              <linearGradient id="equityLine" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stopColor="#FF2D78"/>
+                <stop offset="50%" stopColor="#FF2D78"/>
+                <stop offset="100%" stopColor="#4B0082"/>
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+            <XAxis
+              dataKey="date"
+              stroke="rgba(255,255,255,0.5)"
+              tick={{ fill: 'rgba(255,255,255,0.5)' }}
+            />
+            <YAxis
+              stroke="rgba(255,255,255,0.5)"
+              tick={{ fill: 'rgba(255,255,255,0.5)' }}
+            />
+            <Tooltip
+              contentStyle={{
+                background: 'rgba(26,26,26,0.9)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                borderRadius: '12px',
+                boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+              }}
+            />
+            <Line
+              type="monotone"
+              dataKey="equity"
+              stroke="url(#equityLine)"
+              strokeWidth={3}
+              dot={false}
+              activeDot={{
+                r: 8,
+                fill: '#FF2D78',
+                stroke: '#fff',
+                strokeWidth: 2
+              }}
+              fill="url(#equityGradient)"
+            />
+          </ReLineChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
+  </motion.div>
+));
+
+const MemoizedMonthlyPLChart = memo(({ stats }: { stats: any }) => (
+  <motion.div
+    initial={{ opacity: 0, x: 20 }}
+    animate={{ opacity: 1, x: 0 }}
+    className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#1A1A1A] via-[#252525] to-[#1A1A1A] p-6"
+  >
+    <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-blue-500/5 via-transparent to-transparent" />
+    <div className="relative z-10">
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-3">
+          <PieChart className="w-5 h-5 text-blue-400" />
+          <h3 className="text-lg font-medium text-white/90">Monthly P/L</h3>
+        </div>
+        <button className="flex items-center gap-2 text-sm text-white/40 hover:text-white/60 transition-colors">
+          View Details <ChevronRight className="w-4 h-4" />
+        </button>
+      </div>
+      <div className="h-[400px]">
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart
+            data={Object.entries(stats.monthlyPL)
+              .map(([month, pl]) => ({
+                name: month,
+                value: pl
+              }))
+            }
+            margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+          >
+            <defs>
+              <linearGradient id="profitGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#4ade80" stopOpacity={0.8}/>
+                <stop offset="95%" stopColor="#4ade80" stopOpacity={0}/>
+              </linearGradient>
+              <linearGradient id="lossGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#f87171" stopOpacity={0.8}/>
+                <stop offset="95%" stopColor="#f87171" stopOpacity={0}/>
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+            <XAxis
+              dataKey="name"
+              stroke="rgba(255,255,255,0.5)"
+              tick={{ fill: 'rgba(255,255,255,0.5)' }}
+            />
+            <YAxis stroke="rgba(255,255,255,0.5)" tick={{ fill: 'rgba(255,255,255,0.5)' }} />
+            <Tooltip
+              contentStyle={{
+                background: 'rgba(26,26,26,0.9)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                borderRadius: '12px',
+                boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+              }}
+              cursor={{ fill: 'rgba(255, 255, 255, 0.1)' }}
+            />
+            <Bar dataKey="value">
+              {Object.entries(stats.monthlyPL).map(([, pl], index) => (
+                <Cell
+                  key={`cell-${index}`}
+                  fill={pl >= 0 ? 'url(#profitGradient)' : 'url(#lossGradient)'}
+                />
+              ))}
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
+  </motion.div>
+));
 
 export default Statistics;
