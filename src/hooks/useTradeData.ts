@@ -1,6 +1,25 @@
 import { useState, useEffect } from 'react';
-import { Trade, TradeType } from '../types';
+import { Trade } from '../types';
 import { supabase } from '../lib/supabase';
+
+// Strict database schema interface
+interface DBTrade {
+  user_id: string;
+  symbol: string;
+  date: string;
+  side: string;
+  qty: number;
+  price: number;
+  pl: number;
+  type: string;
+  instrument: string;
+  screenshot: string | null;
+  description: string;
+  deleted: boolean;
+  deleted_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
 
 export function useTradeData() {
   const [trades, setTrades] = useState<Trade[]>([]);
@@ -42,31 +61,56 @@ export function useTradeData() {
 
       if (!user_id) throw new Error('No authenticated user');
 
-      const { id, ...tradeData } = trade as any;
+      // Validate required fields
+      if (!trade.symbol) throw new Error('Symbol is required');
+      if (!trade.date) throw new Error('Date is required');
+      if (!trade.side) throw new Error('Side is required');
+      if (trade.qty === undefined) throw new Error('Quantity is required');
+      if (trade.price === undefined) throw new Error('Price is required');
+      if (trade.pl === undefined) throw new Error('P/L is required');
 
-      const newTrade = {
-        ...tradeData,
-        type: 'trade' as TradeType,
+      // Create trade object strictly matching database schema
+      const dbTrade: DBTrade = {
         user_id,
+        symbol: trade.symbol,
+        date: trade.date,
+        side: trade.side,
         qty: Number(trade.qty),
         price: Number(trade.price),
         pl: Number(trade.pl),
+        type: 'trade',
+        instrument: trade.instrument || 'stock',
+        screenshot: null,
+        description: trade.description || '',
+        deleted: false,
+        deleted_at: null,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       };
 
+      console.log('Attempting database insert:', dbTrade);
+
       const { data, error } = await supabase
         .from('trades')
-        .insert([newTrade])
-        .select('*')
+        .insert([dbTrade])
+        .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error details:', {
+          code: error.code,
+          message: error.message,
+          details: error.details
+        });
+        throw error;
+      }
+      
       await fetchTrades();
       return data;
     } catch (err) {
-      console.error('Error adding trade:', err);
-      setError('Failed to add trade');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to add trade';
+      console.error('Error adding trade:', errorMessage);
+      setError(errorMessage);
       return null;
     }
   };
@@ -81,7 +125,7 @@ export function useTradeData() {
 
       const withdrawal = {
         user_id,
-        type: 'withdrawal' as TradeType,
+        type: 'withdrawal',
         symbol: 'WITHDRAWAL',
         date: new Date().toISOString().split('T')[0],
         side: 'Sell',
@@ -126,7 +170,7 @@ export function useTradeData() {
 
       const deposit = {
         user_id,
-        type: 'deposit' as TradeType,
+        type: 'deposit',
         symbol: 'DEPOSIT',
         date: new Date().toISOString().split('T')[0],
         side: 'Buy',
